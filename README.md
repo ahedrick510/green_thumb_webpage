@@ -4,10 +4,10 @@ Green Thumb Code Design Requirements
 
 Battery voltage sensing - publish to webpage
 
-Actuator statuses
-	linear actuator
-	rotating stepper
-	light stepper
+Actuator statuses:
+	linear actuator, 
+	rotating stepper, 
+	light stepper, 
 	shade stepper
 	
 Light photoresistors - analog voltage
