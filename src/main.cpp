@@ -13,10 +13,11 @@
  int status = WL_IDLE_STATUS;
  WiFiServer server(80);
  
-//Declare some variables
+//Declare some variables to display on webpage
  String plant = "plant";
  int data[] = {1,1,0};
- bool water_level = 0; //0=dry, 1=water
+ int moisture_level = 0; //out of ______
+ int daily_light = 0; //hours
 
 
  void setup() {
