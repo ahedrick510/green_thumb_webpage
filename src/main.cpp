@@ -4,7 +4,76 @@
 #include <Arduino.h>
 #include <WiFiNINA.h>
 
+/* 
+D2 -> SW1
+D3 -> MTR_ENBL
+D4 -> MTR_LATCH
+D5 -> MTR_SCLK
+D6 -> MTR_SDATIN
+D7 -> SERVO1
+D8 -> SERVO2
+D9 -> SERVO3
+D10 -> SERVO4
+D11 -> MOTOR_FOR
+D12 -> MOTOR_BACK
+
+A4 -> LIGHT
+A2 -> SW2
+A1 -> BAT_SENSE
+A0 -> SOIL_SIG
+D13 -> SSR1
+
+Motor Phases connected to shift registers:
+A1 -> Bit 0
+B1 -> Bit 1
+C1 -> Bit 2
+D1 -> But 3
+A2 -> Bit 4
+B2 -> Bit 5
+C2 -> Bit 6
+D2 -> Bit 7
+A3 -> Bit 8
+B3 -> Bit 9
+C3 -> Bit 10
+D3 -> Bit 11
+NC -> Bit 12
+NC -> Bit 13
+NC -> Bit 14
+NC -> Bit 15
+ */
+
+uint8_t pEnable = 3;
+uint8_t pData = 6;
+uint8_t pCLK = 5;
+uint8_t pLatch = 4;
+uint8_t MOTOR_FOR = 11;
+uint8_t MOTOR_BACK = 12;
+uint8_t LIGHT = A4;
+uint8_t SSR1 = 13;
+uint8_t SOIL = A0;
+uint8_t SERVO1 = 7;
+uint8_t SERVO2 = 8;
+uint8_t SERVO3 = 9;
+uint8_t SERVO4 = 10;
+
+uint16_t pA1 = 0b1000000000000000;
+uint16_t pB1 = 0b0100000000000000;
+uint16_t pC1 = 0b0010000000000000;
+uint16_t pD1 = 0b0001000000000000;
+uint16_t pA2 = 0b0000100000000000;
+uint16_t pB2 = 0b0000010000000000;
+uint16_t pC2 = 0b0000001000000000;
+uint16_t pD2 = 0b0000000100000000;
+uint16_t pA3 = 0b0000000010000000;
+uint16_t pB3 = 0b0000000001000000;
+uint16_t pC3 = 0b0000000000100000;
+uint16_t pD3 = 0b0000000000010000;
+
+uint16_t pOff = 0b0000000000000000;
+uint16_t pOn = 0b1111111111111111;
+
  void printWiFiStatus();
+ void phaseOut(uint16_t phases);
 
  char ssid[] = "GREEN THUMB";        // your network SSID (name)
  char pass[] = "fortheplants";    // your network password (use for WPA, or use as key for WEP)
@@ -16,13 +85,20 @@
 //Declare some variables to display on webpage
  String plant = "plant";
  int data[] = {1,1,0};
- int moisture_level = 0; //out of ______
+ bool water_level = 0; //from float sensor: 0 = empty, 1 = full
+ int moisture_level = 0; //this number will be 0-10, sensor gives 0-3 volts output
  int daily_light = 0; //hours
+ int period = 10*60*1000; //10 minutes in milliseconds
 
+ // for finding time
+ int cur_millis = 0; 
+ int last_millis = 0;
 
  void setup() {
    //Initialize serial and wait for port to open:
    Serial.begin(9600);
+   // Wifi Setup
+   {
    while (!Serial) {
      ; // wait for serial port to connect. Needed for native USB port only
    }
@@ -36,17 +112,13 @@
  
 
    // check for the WiFi module:
+   
    if (WiFi.status() == WL_NO_MODULE) {
      Serial.println("Communication with WiFi module failed!");
      // don't continue
      while (true);
    }
- 
 
-   String fv = WiFi.firmwareVersion();
-   if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
-     Serial.println("Please upgrade the firmware");
-   }
  
    // print the network name (SSID);
    Serial.print("Creating access point named: ");
@@ -72,11 +144,30 @@
 
    // you're connected now, so print out the status
    printWiFiStatus();
+   }
+
+
+{
+// Water Level (float sensor) Setup
+{}
+// Moisture Level (capacitive soil sensor) Setup
+{}
+// Light Level Setup
+{}
+// Lighting Mechanism Setup
+{}
+// Shading Mechanism Setup
+{}
+// Rotation Setup
+{}
+}
+last_millis = millis();
  }
  
 
  void loop() {
-   // compare the previous status to the current status
+  // Wifi Loop
+  {
    if (status != WiFi.status()) {
      // it has changed update the variable
      status = WiFi.status();
@@ -169,10 +260,13 @@ client.println("<form action='/get'>");
 client.println("</form>");
           
 client.println("<p>You have selected " + plant);
+client.println("<p>Current soil moisture: ");
+
 client.println("</body>");
 client.println("</html>");
 
 Serial.println("hello");
+           
 
              // The HTTP response ends with another blank line:
              client.println();
@@ -184,7 +278,7 @@ Serial.println("hello");
          } else if (c != '\r') {  // if you got anything else but a carriage return character,
            currentLine += c;      // add it to the end of the currentLine
          }
-
+ 
 if (currentLine.endsWith("GET /get?plant=african_spear")) {
           digitalWrite(LEDR, HIGH);
           plant = "african_spear";
@@ -331,9 +425,54 @@ if (currentLine.endsWith("GET /get?plant=african_spear")) {
      client.stop();
      Serial.println("client disconnected");
    }
+   }
+ 
+ /*******Arduino checks all these things after 10 minutes*********/
+ cur_millis = millis();
+if ((cur_millis - last_millis) > period) {
+  last_millis = millis();
+
+  // Check Water Level
+{
+  if ((cur_millis - last_millis) > 4*24*60*60*1000){
+    water_level = 0;
+  }
+  else water_level = 1;
+
+}
+  // Check Moisture Level
+{
+
+}
+  // Check Light Level
+{}
+  // Rotate Plant every 4 hours
+{}
 
  }
+
+delay(5000);
+ }
  
+
+
+
+ // Wifi stuff reference: Karl Söderby 
+
+
+// HELPER FUNCTIONS!!
+void phaseOut(uint16_t phases)
+{
+    digitalWrite(pLatch, LOW);
+    delayMicroseconds(20);
+    shiftOut(pData, pCLK, LSBFIRST, lowByte(phases));
+    shiftOut(pData, pCLK, LSBFIRST, highByte(phases));
+    delayMicroseconds(20);
+    digitalWrite(pLatch, HIGH);
+    delayMicroseconds(20);
+    digitalWrite(pLatch, LOW);
+    delayMicroseconds(20);
+}
 
  void printWiFiStatus() {
    // print the SSID of the network you're attached to:
@@ -351,11 +490,6 @@ if (currentLine.endsWith("GET /get?plant=african_spear")) {
    Serial.print("To see this page in action, open a browser to http://");
    Serial.println(ip);
  } 
-
- // Wifi stuff reference: Karl Söderby 
-
-
-// HELPER FUNCTIONS!!
 
 /**********************************************
 Plant vector rules:
