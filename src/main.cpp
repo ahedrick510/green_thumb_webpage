@@ -450,6 +450,9 @@ void loop()
 
  }
    // Check Moisture Level
+   analogRead(SOIL)
+    
+   moisture_level = 
  {
 
  }
