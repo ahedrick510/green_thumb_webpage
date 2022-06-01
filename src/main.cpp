@@ -510,20 +510,17 @@ void loop()
   delay(1000);
   digitalWrite(LEDR,LOW);
   delay(1000);
-  // for (int i = 0; i <= 50; i++)
-  // {
-  //   phaseOut(pA3);
-  //   delay(20);
-  //   phaseOut(pB3);
-  //   delay(20);
-  //   phaseOut(pC3);
-  //   delay(20);
-  //   phaseOut(pD3);
-  //   delay(20);
-  // }
-  digitalWrite(pCLK, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(pCLK,LOW);
+  for (int i = 0; i <= 50; i++)
+  {
+    phaseOut(pA3);
+    delay(20);
+    phaseOut(pB3);
+    delay(20);
+    phaseOut(pC3);
+    delay(20);
+    phaseOut(pD3);
+    delay(20);
+  }
   digitalWrite(LEDR,HIGH);
   delay(1000);
   digitalWrite(LEDR,LOW);
