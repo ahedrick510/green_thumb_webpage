@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <WiFiNINA.h>
 
+
 uint8_t pEnable = p15;
 uint8_t pData = p18;
 uint8_t pCLK = p17;
@@ -14,6 +15,7 @@ uint8_t MOTOR_BACK = 12;
 uint8_t SSR1 = 13;
 uint8_t test = p6;
 uint8_t SOIL = A0;
+uint8_t PHOTORES = something; // NEED TO GET THE RIGHT PIN
 uint8_t SERVO1 = 7;
 uint8_t SERVO2 = 8;
 uint8_t SERVO3 = 9;
@@ -52,6 +54,11 @@ bool water_level = 0;        // from float sensor: 0 = empty, 1 = full
 int moisture_level = 0;      // this number will be 0-10, sensor gives 0-3 volts output
 int daily_light = 0;         // hours
 int period = 10 * 60 * 1000; // 10 minutes in milliseconds
+int last_rotation = 0;       // time of last rotation in millis
+// light related values
+int last_day = 0;            // tells what day it is
+int light_times = 0;         // number of times light was recorded in a day (checks every 10 minutes)
+
 
 // for finding time
 int cur_millis = 0;
@@ -113,8 +120,6 @@ void setup()
     {}
     // Moisture Level (capacitive soil sensor) Setup
     {}
-    // Light Level Setup
-    {}
     // Lighting Mechanism Setup
     {}
     // Shading Mechanism Setup
@@ -124,6 +129,7 @@ void setup()
     }
   }
   last_millis = millis();
+  last_rotation = millis();
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(pEnable, OUTPUT);
@@ -235,8 +241,8 @@ void loop()
               client.println("</form>");
 
               client.println("<p>Your plant: " + plant);
-              client.println("<p>Current soil moisture: " + String(moisture_level) + "/10");
-              //client.println("<p>Current daily hours of light: " + String(light_level) + "/10");
+              client.println("<p>Current soil moisture: " + String(moisture_level) + "/1024");
+              client.println("<p>Current daily hours of light: " + String(light_times*6) + " hours");
 
               client.println("</body>");
               client.println("</html>");
@@ -262,7 +268,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "african_spear";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 1;
             data[2] = 1;
           }
@@ -270,7 +276,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "agloenema";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 3;
             data[2] = 1;
           }
@@ -278,7 +284,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "aloe";
-            data[0] = 4;
+            data[0] = 11;
             data[1] = 2;
             data[2] = 1;
           }
@@ -286,7 +292,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "anthurium";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 2;
             data[2] = 1;
           }
@@ -294,7 +300,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "basil";
-            data[0] = 4;
+            data[0] = 11;
             data[1] = 4;
             data[2] = 1;
           }
@@ -302,7 +308,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "begonia";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 4;
             data[2] = 0;
           }
@@ -310,7 +316,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "bromeliad";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 2;
             data[2] = 0;
           }
@@ -318,7 +324,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "dieffenbachia";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 2;
             data[2] = 0;
           }
@@ -326,7 +332,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "dracena";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 2;
             data[2] = 0;
           }
@@ -334,7 +340,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "fig";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 2;
             data[2] = 1;
           }
@@ -342,7 +348,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "jade";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 1;
             data[2] = 1;
           }
@@ -350,7 +356,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "kalanchoe";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 1;
             data[2] = 1;
           }
@@ -358,7 +364,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "kentia_palm";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 1;
             data[2] = 1;
           }
@@ -366,7 +372,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "lily";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 4;
             data[2] = 0;
           }
@@ -374,7 +380,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "mint";
-            data[0] = 1;
+            data[0] = 2;
             data[1] = 3;
             data[2] = 0;
           }
@@ -382,7 +388,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "paddle";
-            data[0] = 4;
+            data[0] = 11;
             data[1] = 1;
             data[2] = 1;
           }
@@ -390,7 +396,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "peperomia";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 1;
             data[2] = 1;
           }
@@ -398,7 +404,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "philodendron";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 1;
             data[2] = 1;
           }
@@ -406,7 +412,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "pilea";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 3;
             data[2] = 1;
           }
@@ -414,7 +420,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "polka_dot_plant";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 3;
             data[2] = 0;
           }
@@ -422,7 +428,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "pothos";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 3;
             data[2] = 1;
           }
@@ -430,7 +436,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "prayer_plant";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 4;
             data[2] = 0;
           }
@@ -438,7 +444,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "ranunculus";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 3;
             data[2] = 1;
           }
@@ -446,7 +452,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "rhipsalis";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 2;
             data[2] = 0;
           }
@@ -454,7 +460,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "schefflera";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 3;
             data[2] = 0;
           }
@@ -462,7 +468,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "snake";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 2;
             data[2] = 1;
           }
@@ -470,7 +476,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "spider";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 2;
             data[2] = 0;
           }
@@ -478,7 +484,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "string_of_dolphins";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 2;
             data[2] = 1;
           }
@@ -486,7 +492,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "succulent";
-            data[0] = 4;
+            data[0] = 11;
             data[1] = 1;
             data[2] = 1;
           }
@@ -494,7 +500,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "swedish_purple_ivy";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 3;
             data[2] = 1;
           }
@@ -502,7 +508,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "venus_fly_trap";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 4;
             data[2] = 1;
           }
@@ -510,7 +516,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "violet";
-            data[0] = 3;
+            data[0] = 8;
             data[1] = 3;
             data[2] = 0;
           }
@@ -518,7 +524,7 @@ void loop()
           {
             digitalWrite(LEDR, HIGH);
             plant = "ZZ";
-            data[0] = 2;
+            data[0] = 5;
             data[1] = 2;
             data[2] = 1;
             // } if (currentLine.endsWith("")){
@@ -552,7 +558,7 @@ void loop()
         water_level = 1;
     }
     // Check Moisture Level
-     moisture_level = floor(analogRead(SOIL)*10/3);
+     moisture_level = analogRead(SOIL);
      switch (data[1]){
        case 1:
        //water 1 per week
@@ -561,18 +567,41 @@ void loop()
        //water if last sensor value has been dry for a day
        break;
        case 3:
-       //water if moisture_level
+       //water if moisture_level <= 1
+       break;
+       case 4:
+       //water if moisture_level <= 2
+       break;
+       case 5:
+       //water if moisture_level <= 3
        break;
   }
   // Check Light Level
-  {}
-  // Rotate Plant every 4 hours
   {
+    // query photoresistor
+    if (analogRead(PHOTORES) < 3){// less than 3 volts = light is shining
+      light_times++;
+    }
+    if (light_times*6 > data[0]){
+      // put shade up
+    }
+    if (millis() - last_day*24*60*60*1000 > (24*60*60*1000)){
+      last_day++;
+      // put shade down if it is up
+      light_times = 0;
+    }
+
+    // if too much light: shade
+    
+    // if not enough light: turn on light
+  }
+  // Rotate Plant every 4 hours
+  if ((millis() - last_rotation) > 4*60*60*1000) {
+      // rotate plant 120 degrees or something idk
   }
 }
 
 }
-// Wifi stuff reference: Karl Söderby
 
 // HELPER FUNCTIONS!!
 void phaseOut(uint16_t phases)
