@@ -1,5 +1,5 @@
 #include <Arduino.h>
-//#include <Servo.h> RP2040 not supported
+#include <Servo.h> 
 
 /*
 D2 -> SW1
@@ -38,6 +38,7 @@ NC -> Bit 13
 NC -> Bit 14
 NC -> Bit 15
  */
+// 9, 10, 11 are pwm capable nanoatmega328p
 uint8_t pEnable = 3;
 uint8_t pData = 6;
 uint8_t pCLK = 5;
@@ -68,6 +69,8 @@ uint16_t pD3 = 0b0000000000010000;
 uint16_t pOff = 0b0000000000000000;
 uint16_t pOn = 0b1111111111111111;
 
+Servo servo4;
+
 void phaseOut(uint16_t phases);
 void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, byte val);
 
@@ -83,6 +86,18 @@ void setup()
 
     digitalWrite(pEnable, HIGH);
     delayMicroseconds(20);
+
+    servo4.attach(10);
+    servo4.write(85);
+    delay(3000);
+    servo4.write(110);
+    delay(3000);
+    servo4.write(85);
+    delay(3000);
+    servo4.write(110);
+    delay(3000);
+
+
 }
 
 // the loop function runs over and over again forever
@@ -96,6 +111,8 @@ void loop()
 
     // digitalWrite(LED_BUILTIN, HIGH);
     // delay(50);
+
+    
 
     for (int i = 0; i <= 250; i++)
     {
